@@ -54,7 +54,7 @@
 	// Usar $derived para calcular hasValue
 	const hasValue = $derived(!!value);
 
-	const baseClasses = 'block w-full rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 bg-white dark:bg-slate-800 border-2';
+	const baseClasses = 'block w-full rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 bg-white dark:bg-stone-800 border-2';
 
 	const sizeClasses = {
 		sm: 'px-3 py-2 text-sm',
@@ -65,26 +65,26 @@
 	// Usar $derived para las clases del variant
 	const variantClasses = $derived(() => {
 		const base = {
-			default: `border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100 focus:ring-blue-500 focus:border-blue-500`,
-			error: 'border-red-300 dark:border-red-500 text-slate-900 dark:text-slate-100 focus:ring-red-500 focus:border-red-500 bg-red-50/50 dark:bg-red-900/10',
-			success: 'border-green-300 dark:border-green-500 text-slate-900 dark:text-slate-100 focus:ring-green-500 focus:border-green-500 bg-green-50/50 dark:bg-green-900/10',
-			ghost: 'border-transparent bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-blue-500 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800'
+			default: `border-stone-200 dark:border-stone-600 text-stone-900 dark:text-stone-100 focus:ring-sky-500 focus:border-sky-500`,
+			error: 'border-red-300 dark:border-red-500 text-stone-900 dark:text-stone-100 focus:ring-red-500 focus:border-red-500 bg-red-50/50 dark:bg-red-900/10',
+			success: 'border-emerald-300 dark:border-emerald-500 text-stone-900 dark:text-stone-100 focus:ring-emerald-500 focus:border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10',
+			ghost: 'border-transparent bg-stone-100 dark:bg-stone-700 text-stone-900 dark:text-stone-100 focus:ring-sky-500 focus:border-sky-500 focus:bg-white dark:focus:bg-stone-800'
 		};
 
 		if (variant === 'default' && (focused || hasValue)) {
-			return base.default + ' border-blue-300 dark:border-blue-500';
+			return base.default + ' border-sky-300 dark:border-sky-500';
 		}
 
 		return base[variant];
 	});
 
-	const disabledClasses = 'disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-100 dark:disabled:bg-slate-900';
+	const disabledClasses = 'disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-stone-100 dark:disabled:bg-stone-900';
 
 	// Usar $derived para las clases finales
 	const classes = $derived(`${baseClasses} ${sizeClasses[size]} ${variantClasses()} ${disabledClasses} ${className}`);
 
 	// Clases específicas para input file con diseño moderno
-	const fileClasses = 'file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:transition-all file:duration-200 file:shadow-md';
+	const fileClasses = 'file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-sky-600 file:text-white hover:file:bg-sky-700 file:transition-all file:duration-200 file:shadow-md';
 
 	function handleFocus(event: Event) {
 		focused = true;
@@ -105,7 +105,7 @@
 	{#if label}
 		<label
 			for={id}
-			class="block text-sm font-semibold text-slate-700 dark:text-slate-300 {required ? 'after:content-[\'*\'] after:text-red-500 after:ml-1' : ''}"
+			class="block text-sm font-semibold text-stone-700 dark:text-stone-300 {required ? 'after:content-[\'*\'] after:text-red-500 after:ml-1' : ''}"
 		>
 			{label}
 		</label>
@@ -121,7 +121,7 @@
 				{required}
 				{accept}
 				{multiple}
-				class="{classes} {fileClasses} text-slate-500 cursor-pointer hover:shadow-md"
+				class="{classes} {fileClasses} text-stone-500 cursor-pointer hover:shadow-md"
 				onchange={onchange}
 				onfocus={handleFocus}
 				onblur={handleBlur}
@@ -136,7 +136,7 @@
 				{disabled}
 				{required}
 				{readonly}
-				class="{classes} {icon ? 'pl-12' : ''} hover:shadow-md placeholder:text-slate-400 dark:placeholder:text-slate-500"
+				class="{classes} {icon ? 'pl-12' : ''} hover:shadow-md placeholder:text-stone-400 dark:placeholder:text-stone-500"
 				oninput={handleInput}
 				onchange={onchange}
 				onfocus={handleFocus}
@@ -147,7 +147,7 @@
 
 		<!-- Icono decorativo -->
 		{#if icon && type !== 'file'}
-			<div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none">
+			<div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-stone-400 dark:text-stone-500 pointer-events-none">
 				{#if type === 'email'}
 					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
@@ -170,7 +170,7 @@
 
 		<!-- Indicador de estado -->
 		{#if variant === 'success'}
-			<div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 pointer-events-none">
+			<div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-emerald-500 pointer-events-none">
 				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
 				</svg>
@@ -184,7 +184,7 @@
 		{/if}
 
 		<!-- Efecto de foco -->
-		<div class="absolute inset-0 rounded-xl pointer-events-none transition-all duration-200 {focused ? 'ring-2 ring-blue-500/20 ring-offset-2' : ''}"></div>
+		<div class="absolute inset-0 rounded-xl pointer-events-none transition-all duration-200 {focused ? 'ring-2 ring-sky-500/20 ring-offset-2' : ''}"></div>
 	</div>
 
 	<!-- Texto de ayuda o error -->
@@ -196,7 +196,7 @@
 			{errorText}
 		</p>
 	{:else if helperText}
-		<p class="text-sm text-slate-500 dark:text-slate-400">
+		<p class="text-sm text-stone-500 dark:text-stone-400">
 			{helperText}
 		</p>
 	{/if}

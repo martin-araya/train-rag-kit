@@ -71,20 +71,30 @@ export interface Message {
 	timestamp?: Date;
 	id?: string;
 }
+// Tipo para una conversación individual
+export interface Conversation {
+	id: string;
+	name: string;
+	messages: Message[];
+	createdAt: Date;
+	lastActivity: Date;
+	isFavorite?: boolean;
+	tags?: string[];
+	summary?: string;
+}
 
-// Estados mejorados de la aplicación (actualizado con sistema de mensajes)
+// Estado global de la aplicación, ahora centrado en conversaciones
 export interface AppState {
 	selectedFile: File | null;
 	uploadStatus: string;
 	uploadProgress: number;
-	question: string;
-	messages: Message[]; // Reemplaza 'answer: string'
+	question: string; // El input de texto actual, no parte de la conversación
+	conversations: Conversation[];
+	activeConversationId: string | null;
 	isUploading: boolean;
 	isQuerying: boolean;
 	error: string;
 	isConnected: boolean;
-	lastActivity: Date | null;
-	sessionId: string;
 }
 
 export interface LogState {

@@ -357,6 +357,35 @@ export async function getCurrentModel(): Promise<{ model: string; available: boo
 	}
 }
 
+// Función para obtener el modelo de embedding activo actual
+export async function getCurrentEmbeddingModel(): Promise<{ model: string; available: boolean }> {
+	try {
+		logger.debug('Obteniendo modelo de embedding actual', null, 'ModelSelection');
+
+		const response = await fetchWithTimeout(`${API_URL}/current-embedding-model`, {
+			method: 'GET',
+			headers: {
+				'Accept': 'application/json'
+			}
+		});
+
+		if (!response.ok) {
+			throw new Error(`Error al obtener modelo de embedding actual: ${response.status}`);
+		}
+
+		const result = await response.json();
+
+		logger.info('Modelo de embedding actual obtenido', { model: result.model }, 'ModelSelection');
+
+		return result;
+	} catch (error) {
+		logger.warn('Error obteniendo modelo de embedding actual', {
+			error: error instanceof Error ? error.message : error
+		}, 'ModelSelection');
+		return { model: 'granite-embedding:278m', available: false };
+	}
+}
+
 // Servicio para subir archivos PDF (sin cambios)
 export async function uploadPDF(file: File): Promise<UploadResponse> {
 	const operationId = `upload_${Date.now()}`;

@@ -21,13 +21,13 @@
 		children
 	}: Props = $props();
 
-	const baseClasses = 'rounded-2xl transition-all duration-300';
+	const baseClasses = 'rounded-2xl transition-all duration-300 relative';
 
 	const variantClasses = {
-		default: 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm',
-		elevated: 'bg-white dark:bg-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 border border-slate-100 dark:border-slate-700',
-		outlined: 'bg-transparent border-2 border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500',
-		glass: 'bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-2xl'
+		default: 'bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-sm',
+		elevated: 'bg-white dark:bg-stone-800 shadow-xl shadow-stone-200/50 dark:shadow-stone-900/50 border border-stone-100 dark:border-stone-700',
+		outlined: 'bg-transparent border-2 border-stone-200 dark:border-stone-600 hover:border-stone-300 dark:hover:border-stone-500',
+		glass: 'bg-white/80 dark:bg-stone-800/80 backdrop-blur-xl border border-white/20 dark:border-stone-700/50 shadow-2xl'
 	};
 
 	const paddingClasses = {
@@ -37,7 +37,7 @@
 		lg: 'p-8'
 	};
 
-	const hoverClasses = hoverable ? 'hover:shadow-2xl hover:shadow-slate-200/60 dark:hover:shadow-slate-900/60 hover:-translate-y-1 cursor-pointer' : '';
+	const hoverClasses = hoverable ? 'hover:shadow-2xl hover:shadow-stone-200/60 dark:hover:shadow-stone-900/60 hover:-translate-y-1 cursor-pointer' : '';
 
 	const classes = `${baseClasses} ${variantClasses[variant]} ${paddingClasses[padding]} ${hoverClasses} ${className}`;
 </script>
@@ -46,12 +46,12 @@
 	{#if title || subtitle}
 		<header class="mb-6 {padding === 'none' ? 'px-6 pt-6' : ''}">
 			{#if title}
-				<h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2 bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-200 bg-clip-text text-transparent">
+				<h2 class="text-2xl font-bold text-stone-900 dark:text-stone-100 mb-2 bg-gradient-to-r from-stone-900 to-stone-700 dark:from-stone-100 dark:to-stone-200 bg-clip-text text-transparent">
 					{title}
 				</h2>
 			{/if}
 			{#if subtitle}
-				<p class="text-slate-600 dark:text-slate-400 text-base leading-relaxed">
+				<p class="text-stone-600 dark:text-stone-400 text-base leading-relaxed">
 					{subtitle}
 				</p>
 			{/if}

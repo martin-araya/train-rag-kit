@@ -1,14 +1,20 @@
+<!-- src/routes/+layout.svelte - Layout integrado -->
 <script lang="ts">
 	import '../app.css';
-	import { onMount } from 'svelte';
+	import { onMount, type Snippet } from 'svelte';
 	import { logger } from '$lib/stores/logger';
 	import { browser } from '$app/environment';
+	import { chatActions } from '$lib/stores/chat';
+
+	let { children }: { children: Snippet } = $props();
 
 	let darkMode = $state(false);
+	let initialLoad = $state(true);
+	let isTogglingTheme = false;
 
 	onMount(() => {
 		// Log inicial cuando se monta la aplicación
-		logger.info('Aplicación RAG inicializada', {
+		logger.info('Aplicación RAG con Chat Inteligente inicializada', {
 			timestamp: new Date().toISOString(),
 			userAgent: navigator.userAgent,
 			viewport: {
@@ -16,6 +22,9 @@
 				height: window.innerHeight
 			}
 		}, 'App');
+
+		// Cargar conversaciones guardadas
+		chatActions.loadFromStorage();
 
 		// Detectar preferencia de tema
 		const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
@@ -38,9 +47,10 @@
 			}
 		});
 
-		// Prevenir zoom en mobile
-		document.addEventListener('gesturestart', (e) => e.preventDefault());
-		document.addEventListener('gesturechange', (e) => e.preventDefault());
+		// Ocultar la pantalla de carga después de un breve momento
+		setTimeout(() => {
+			initialLoad = false;
+		}, 200);
 	});
 
 	function updateTheme() {
@@ -56,17 +66,23 @@
 	}
 
 	function toggleTheme() {
+		if (isTogglingTheme) return;
+		isTogglingTheme = true;
+
 		darkMode = !darkMode;
 		updateTheme();
 
 		logger.info('Tema cambiado', {
 			newTheme: darkMode ? 'dark' : 'light'
 		}, 'ThemeToggle');
+
+		setTimeout(() => {
+			isTogglingTheme = false;
+		}, 100);
 	}
 
 	// Performance monitoring
 	onMount(() => {
-		// Log performance metrics
 		if ('performance' in window) {
 			setTimeout(() => {
 				const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
@@ -82,20 +98,20 @@
 </script>
 
 <svelte:head>
-	<title>RAG con SvelteKit - Chatea con tus Documentos</title>
-	<meta name="description" content="Aplicación inteligente para chatear con documentos PDF usando SvelteKit, Tailwind CSS y tecnología RAG (Retrieval-Augmented Generation)." />
-	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-	<meta name="theme-color" content={darkMode ? '#0f172a' : '#ffffff'} />
+	<title>Train RAG Kit - Chat Inteligente con tus Documentos</title>
+	<meta name="description" content="Sistema avanzado de chat inteligente para análisis de documentos PDF usando RAG, con conversaciones múltiples, búsqueda avanzada y exportación." />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta name="theme-color" content={darkMode ? '#1c1917' : '#fafaf9'} />
 
 	<!-- Open Graph / Facebook -->
 	<meta property="og:type" content="website" />
-	<meta property="og:title" content="RAG con SvelteKit - Chatea con tus Documentos" />
-	<meta property="og:description" content="Aplicación inteligente para chatear con documentos PDF usando tecnología RAG." />
+	<meta property="og:title" content="Train RAG Kit - Chat Inteligente" />
+	<meta property="og:description" content="Sistema avanzado para chatear con documentos PDF usando IA. Conversaciones múltiples, búsqueda inteligente y exportación." />
 
 	<!-- Twitter -->
-	<meta property="twitter:card" content="summary" />
-	<meta property="twitter:title" content="RAG con SvelteKit" />
-	<meta property="twitter:description" content="Chatea con tus documentos PDF de forma inteligente" />
+	<meta property="twitter:card" content="summary_large_image" />
+	<meta property="twitter:title" content="Train RAG Kit - Chat Inteligente" />
+	<meta property="twitter:description" content="Chatea inteligentemente con tus documentos PDF. Múltiples conversaciones, búsqueda avanzada y más." />
 
 	<!-- Favicon -->
 	<link rel="icon" href="/favicon.ico" />
@@ -108,11 +124,16 @@
 </svelte:head>
 
 <!-- Contenedor principal con tema dinámico -->
-<div class="min-h-screen text-slate-800 dark:text-slate-200 transition-colors duration-300 relative overflow-hidden">
-	<!-- Toggle de tema -->
+<div class="min-h-screen bg-stone-50 dark:bg-stone-900 text-stone-800 dark:text-stone-200 transition-colors duration-300 relative overflow-hidden">
+	<!-- Patrón de fondo sutil (mantenido de tu diseño original) -->
+	<div class="absolute inset-0 opacity-30 dark:opacity-20 pointer-events-none">
+		<div class="absolute inset-0" style="background-image: radial-gradient(circle at 1px 1px, rgb(120 113 108 / 0.15) 1px, transparent 0); background-size: 20px 20px;"></div>
+	</div>
+
+	<!-- Toggle de tema (mantenido en tu posición original) -->
 	<button
 		onclick={toggleTheme}
-		class="fixed top-4 right-4 z-50 p-3 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-lg border border-slate-200/50 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500"
+		class="fixed top-4 right-4 z-50 p-3 rounded-full bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm shadow-lg border border-stone-200/60 dark:border-stone-700/60 text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-sky-500"
 		aria-label="Cambiar tema"
 		title="Cambiar tema"
 	>
@@ -129,27 +150,22 @@
 		{/if}
 	</button>
 
-	<!-- Gradiente de fondo animado -->
-	<div class="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-transparent to-purple-50/50 dark:from-blue-950/30 dark:via-transparent dark:to-purple-950/30 pointer-events-none"></div>
-
-	<!-- Efectos decorativos -->
-	<div class="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
-		<div class="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-r from-blue-400/10 to-purple-400/10 rounded-full blur-3xl animate-pulse"></div>
-		<div class="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-green-400/10 to-blue-400/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 2s;"></div>
-	</div>
-
 	<!-- Contenido principal -->
-	<div class="relative z-10">
-		<slot />
+	<div class="relative z-10 h-screen">
+		{@render children()}
 	</div>
 </div>
 
-<!-- Loading screen para primera carga -->
+<!-- Loading screen para primera carga (mantenido igual) -->
 {#if browser}
-	<div class="fixed inset-0 bg-white dark:bg-slate-900 z-50 flex items-center justify-center transition-opacity duration-500 opacity-0 pointer-events-none" id="loading-screen">
+	<div
+		class="fixed inset-0 bg-stone-50 dark:bg-stone-900 z-50 flex items-center justify-center transition-opacity duration-500"
+		class:opacity-0={!initialLoad}
+		class:pointer-events-none={!initialLoad}
+	>
 		<div class="text-center space-y-4">
-			<div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
-			<p class="text-slate-600 dark:text-slate-400">Cargando aplicación...</p>
+			<div class="w-12 h-12 border-4 border-stone-200 border-t-sky-600 rounded-full animate-spin mx-auto"></div>
+			<p class="text-stone-600 dark:text-stone-400">Cargando Chat Inteligente...</p>
 		</div>
 	</div>
 {/if}

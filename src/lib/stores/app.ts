@@ -1,5 +1,5 @@
 import { writable, derived, get } from 'svelte/store';
-import type { AppState, Message } from '$lib/types';
+import type { AppState, Message, Conversation } from '$lib/types';
 import { logger } from './logger';
 import { browser } from '$app/environment';
 
@@ -8,28 +8,42 @@ const generateMessageId = (): string => {
 	return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 };
 
-// Generar ID de sesión único
-const generateSessionId = (): string => {
-	return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+// Helper para crear una nueva conversación
+const createNewConversationObject = (): Conversation => {
+	const now = new Date();
+	const timestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+	return {
+		id: `conv_${now.getTime()}_${Math.random().toString(36).substr(2, 9)}`,
+		name: `Chat @ ${timestamp}`,
+		messages: [],
+		createdAt: now,
+		lastActivity: now
+	};
 };
 
-// Estado inicial de la aplicación (actualizado con sistema de mensajes)
+// Estado inicial con una conversación por defecto
+const firstConversation = createNewConversationObject();
 const initialAppState: AppState = {
 	selectedFile: null,
 	uploadStatus: '',
 	uploadProgress: 0,
 	question: '',
-	messages: [], // Reemplaza 'answer: ""'
+	conversations: [firstConversation],
+	activeConversationId: firstConversation.id,
 	isUploading: false,
 	isQuerying: false,
 	error: '',
-	isConnected: true,
-	lastActivity: null,
-	sessionId: generateSessionId()
+	isConnected: true
 };
 
 // Store principal de la aplicación
 export const appStore = writable<AppState>(initialAppState);
+
+// Store derivado para la conversación activa
+export const activeConversation = derived([appStore], ([$appStore]) => {
+	if (!$appStore.activeConversationId) return null;
+	return $appStore.conversations.find((c) => c.id === $appStore.activeConversationId) || null;
+});
 
 // Stores derivados para mejor organización
 export const fileStore = derived(appStore, $app => ({
@@ -39,26 +53,13 @@ export const fileStore = derived(appStore, $app => ({
 	isUploading: $app.isUploading
 }));
 
-export const queryStore = derived(appStore, $app => ({
-	question: $app.question,
-	messages: $app.messages,
-	isQuerying: $app.isQuerying
-}));
 
 export const connectionStore = derived(appStore, $app => ({
-	isConnected: $app.isConnected,
-	lastActivity: $app.lastActivity
+	isConnected: $app.isConnected
 }));
 
 export const errorStore = derived(appStore, $app => $app.error);
 
-// Helper para actualizar última actividad
-function updateLastActivity() {
-	appStore.update(state => ({
-		...state,
-		lastActivity: new Date()
-	}));
-}
 
 // Funciones para actualizar el estado del archivo
 export function setSelectedFile(file: File | null) {
@@ -72,7 +73,6 @@ export function setSelectedFile(file: File | null) {
 		error: ''
 	}));
 
-	updateLastActivity();
 
 	if (file) {
 		logger.info(
@@ -110,10 +110,9 @@ export function setUploading(isUploading: boolean) {
 		uploadProgress: isUploading ? 0 : state.uploadProgress
 	}));
 
-	updateLastActivity();
-
 	if (isUploading) {
-		const operationId = `upload_${currentState.sessionId}_${Date.now()}`;
+		const activeConv = get(activeConversation);
+		const operationId = `upload_${activeConv?.id}_${Date.now()}`;
 		logger.startPerformance(operationId, 'upload');
 		logger.info('Iniciando subida de archivo', {
 			filename: currentState.selectedFile?.name,
@@ -147,7 +146,6 @@ export function setQuestion(question: string) {
 		error: ''
 	}));
 
-	updateLastActivity();
 
 	if (trimmedQuestion) {
 		logger.debug(`Pregunta actualizada: ${trimmedQuestion.substring(0, 50)}...`,
@@ -163,74 +161,69 @@ export function addMessage(message: Omit<Message, 'id' | 'timestamp'>) {
 		timestamp: new Date()
 	};
 
-	appStore.update(state => ({
-		...state,
-		messages: [...state.messages, newMessage]
-	}));
+	appStore.update(state => {
+		const activeConvIndex = state.conversations.findIndex((c) => c.id === state.activeConversationId);
+		if (activeConvIndex === -1) {
+			logger.error('No hay conversación activa para añadir mensaje', { activeId: state.activeConversationId }, 'Chat');
+			return state;
+		}
 
-	updateLastActivity();
+		const updatedConversations = [...state.conversations];
+		const updatedConversation = {
+			...updatedConversations[activeConvIndex],
+			messages: [...updatedConversations[activeConvIndex].messages, newMessage],
+			lastActivity: new Date()
+		};
+		updatedConversations[activeConvIndex] = updatedConversation;
+
+		return {
+			...state,
+			conversations: updatedConversations
+		};
+	});
 
 	logger.info(`Mensaje añadido: ${newMessage.role}`, {
 		messageId: newMessage.id,
 		role: newMessage.role,
 		contentLength: newMessage.content.length,
-		messagesCount: get(appStore).messages.length
+		conversationId: get(appStore).activeConversationId
 	}, 'Chat');
 }
 
 // Función para limpiar mensajes
 export function clearMessages() {
-	const currentMessageCount = get(appStore).messages.length;
+	appStore.update(state => {
+		const activeConvIndex = state.conversations.findIndex((c) => c.id === state.activeConversationId);
+		if (activeConvIndex === -1) return state;
 
-	appStore.update(state => ({
-		...state,
-		messages: []
-	}));
+		const updatedConversations = [...state.conversations];
+		updatedConversations[activeConvIndex] = {
+			...updatedConversations[activeConvIndex],
+			messages: []
+		};
 
-	updateLastActivity();
+		logger.info('Mensajes de la conversación activa limpiados', { conversationId: state.activeConversationId }, 'Chat');
 
-	logger.info('Mensajes del chat limpiados', {
-		previousMessageCount: currentMessageCount
-	}, 'Chat');
+		return {
+			...state,
+			conversations: updatedConversations
+		};
+	});
 }
+
+
 
 // Función para eliminar el último mensaje
 export function removeLastMessage() {
-	const currentState = get(appStore);
-	if (currentState.messages.length === 0) return;
+	// Esta función podría necesitar una reimplementación o ser eliminada
+	// ya que operar sobre el último mensaje de la conversación activa es más complejo.
+	// Por ahora, la dejamos comentada para evitar errores.
+	logger.warn('removeLastMessage no está implementado en el nuevo sistema de conversaciones.', null, 'Chat');
 
-	const removedMessage = currentState.messages[currentState.messages.length - 1];
-
-	appStore.update(state => ({
-		...state,
-		messages: state.messages.slice(0, -1)
-	}));
-
-	updateLastActivity();
-
-	logger.info('Último mensaje eliminado', {
-		removedMessageId: removedMessage.id,
-		removedRole: removedMessage.role,
-		remainingMessages: get(appStore).messages.length
-	}, 'Chat');
 }
 
 // Función para obtener el último mensaje de un rol específico
-export function getLastMessage(role?: 'user' | 'assistant'): Message | null {
-	const messages = get(appStore).messages;
 
-	if (!role) {
-		return messages[messages.length - 1] || null;
-	}
-
-	for (let i = messages.length - 1; i >= 0; i--) {
-		if (messages[i].role === role) {
-			return messages[i];
-		}
-	}
-
-	return null;
-}
 
 // Función legacy para compatibilidad (deprecated)
 export function setAnswer(answer: string) {
@@ -250,10 +243,10 @@ export function setQuerying(isQuerying: boolean) {
 		isQuerying
 	}));
 
-	updateLastActivity();
 
 	if (isQuerying) {
-		const operationId = `query_${currentState.sessionId}_${Date.now()}`;
+		const activeConv = get(activeConversation);
+		const operationId = `query_${activeConv?.id}_${Date.now()}`;
 		logger.startPerformance(operationId, 'query');
 		logger.info('Iniciando consulta', {
 			question: currentState.question.substring(0, 100),
@@ -273,7 +266,7 @@ export function setError(error: string) {
 		isQuerying: false
 	}));
 
-	updateLastActivity();
+
 
 	if (error) {
 		logger.error('Error en la aplicación', { error }, 'App');
@@ -302,7 +295,7 @@ export function setConnectionStatus(isConnected: boolean) {
 		isConnected
 	}));
 
-	updateLastActivity();
+
 
 	if (isConnected !== previousStatus) {
 		const status = isConnected ? 'conectado' : 'desconectado';
@@ -323,7 +316,7 @@ export function resetUpload() {
 		isUploading: false
 	}));
 
-	updateLastActivity();
+
 
 	logger.info('Estado de subida reiniciado', {
 		previousFile: currentState.selectedFile?.name
@@ -331,43 +324,78 @@ export function resetUpload() {
 }
 
 export function resetQuery() {
-	const currentState = get(appStore);
+	const activeConv = get(activeConversation);
+
+	if (activeConv) {
+		clearMessages(); // Limpia los mensajes de la conversación activa
+	}
 
 	appStore.update(state => ({
 		...state,
 		question: '',
-		messages: [], // Limpiar mensajes en lugar de answer
 		isQuerying: false
 	}));
 
-	updateLastActivity();
-
-	logger.info('Estado de consulta reiniciado', {
-		hadQuestion: !!currentState.question,
-		messageCount: currentState.messages.length
-	}, 'Query');
+	logger.info('Estado de consulta reiniciado para la conversación activa', {
+		conversationId: activeConv?.id
+	}, 'Chat');
 }
 
 export function resetAll() {
-	const currentSessionId = get(appStore).sessionId;
+	const newConversation = createNewConversationObject();
 
 	appStore.set({
 		...initialAppState,
-		sessionId: currentSessionId // Mantener el ID de sesión actual
+		conversations: [newConversation],
+		activeConversationId: newConversation.id
 	});
 
-	logger.info('Aplicación reiniciada completamente', { sessionId: currentSessionId }, 'App');
+	logger.info('Aplicación reiniciada completamente. Nueva conversación creada.', { conversationId: newConversation.id }, 'App');
 }
 
-export function startNewSession() {
-	const newSessionId = generateSessionId();
+export function createNewConversation() {
+	const newConversation = createNewConversationObject();
+	appStore.update(state => ({
+		...state,
+		conversations: [newConversation, ...state.conversations],
+		activeConversationId: newConversation.id,
+		question: '',
+		error: ''
+	}));
+	logger.info('Nueva conversación creada', { conversationId: newConversation.id }, 'Session');
+}
 
-	appStore.set({
-		...initialAppState,
-		sessionId: newSessionId
+export function setActiveConversation(conversationId: string) {
+	appStore.update(state => {
+		if (state.conversations.some(c => c.id === conversationId)) {
+			logger.info('Cambiando a conversación', { conversationId }, 'Session');
+			return { ...state, activeConversationId: conversationId };
+		}
+		logger.warn('Intento de cambiar a una conversación inexistente', { conversationId }, 'Session');
+		return state;
+	});
+}
+
+export function deleteConversation(conversationId: string) {
+	appStore.update(state => {
+		const conversations = state.conversations.filter(c => c.id !== conversationId);
+		let activeConversationId = state.activeConversationId;
+
+		if (conversations.length === 0) {
+			const newConv = createNewConversationObject();
+			logger.info('Última conversación eliminada, creando una nueva.', { newConversationId: newConv.id }, 'Session');
+			return { ...initialAppState, conversations: [newConv], activeConversationId: newConv.id };
+		}
+
+		if (activeConversationId === conversationId) {
+			activeConversationId = conversations[0].id;
+			logger.info('Conversación activa eliminada, cambiando a la siguiente.', { newActiveId: activeConversationId }, 'Session');
+		}
+
+		logger.info('Conversación eliminada', { conversationId }, 'Session');
+		return { ...state, conversations, activeConversationId };
 	});
 
-	logger.info('Nueva sesión iniciada', { sessionId: newSessionId }, 'Session');
 }
 
 // Funciones helper para validaciones
@@ -443,16 +471,16 @@ export function showTemporaryError(error: string, duration: number = 5000) {
 export function getSessionStats() {
 	const state = get(appStore);
 
+	const activeConversation = state.conversations.find(c => c.id === state.activeConversationId);
+
 	return {
-		sessionId: state.sessionId,
-		startTime: initialAppState.lastActivity || new Date(),
-		lastActivity: state.lastActivity,
+		activeConversationId: state.activeConversationId,
+		activeConversation,
 		hasFile: !!state.selectedFile,
 		hasQuery: !!state.question,
-		questionCount: state.messages.filter((m) => m.role === 'user').length,
-		answerCount: state.messages.filter((m) => m.role === 'assistant').length,
 		isActive: state.isUploading || state.isQuerying,
-		connectionStatus: state.isConnected ? 'connected' : 'disconnected'
+		connectionStatus: state.isConnected ? 'connected' : 'disconnected',
+		totalConversations: state.conversations.length
 	};
 }
 
@@ -461,7 +489,7 @@ export function initializeAppLogging() {
 	if (!browser) return;
 
 	logger.info('Aplicación inicializada', {
-		sessionId: get(appStore).sessionId,
+		activeConversationId: get(appStore).activeConversationId,
 		timestamp: new Date().toISOString(),
 		userAgent: navigator.userAgent
 	}, 'App');
@@ -491,8 +519,7 @@ export function cleanup() {
 	const stats = getSessionStats();
 
 	logger.info('Limpieza de aplicación', {
-		sessionDuration: stats.lastActivity ?
-			Date.now() - (stats.lastActivity?.getTime() || 0) : 0,
+		sessionDuration: stats.activeConversation ? Date.now() - stats.activeConversation.createdAt.getTime() : 0,
 		...stats
 	}, 'App');
 }

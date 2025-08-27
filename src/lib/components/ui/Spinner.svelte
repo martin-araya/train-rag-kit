@@ -1,7 +1,7 @@
 <script lang="ts">
 	interface Props {
 		size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-		color?: 'blue' | 'gray' | 'red' | 'green' | 'yellow' | 'purple' | 'pink' | 'white' | 'indigo';
+		color?: 'sky' | 'stone' | 'red' | 'emerald' | 'amber' | 'purple' | 'pink' | 'white' | 'indigo';
 		variant?: 'circle' | 'dots' | 'pulse' | 'bars' | 'orbit' | 'wave';
 		class?: string;
 		label?: string;
@@ -10,7 +10,7 @@
 
 	let {
 		size = 'md',
-		color = 'blue',
+		color = 'sky',
 		variant = 'circle',
 		class: className = '',
 		label = 'Cargando...',
@@ -26,15 +26,15 @@
 	};
 
 	const colorClasses = {
-		blue: 'text-blue-600',
-		gray: 'text-gray-600',
-		red: 'text-red-600',
-		green: 'text-green-600',
-		yellow: 'text-yellow-600',
-		purple: 'text-purple-600',
-		pink: 'text-pink-600',
+		sky: 'text-sky-600 dark:text-sky-400',
+		stone: 'text-stone-600 dark:text-stone-400',
+		red: 'text-red-600 dark:text-red-400',
+		emerald: 'text-emerald-600 dark:text-emerald-400',
+		amber: 'text-amber-600 dark:text-amber-400',
+		purple: 'text-purple-600 dark:text-purple-400',
+		pink: 'text-pink-600 dark:text-pink-400',
 		white: 'text-white',
-		indigo: 'text-indigo-600'
+		indigo: 'text-indigo-600 dark:text-indigo-400'
 	};
 
 	const speedClasses = {
@@ -55,8 +55,8 @@
 		aria-label={label}
 		role="status"
 	>
-		<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-		<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+		<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+		<path class="opacity-75 fill-current" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
 	</svg>
 
 {:else if variant === 'dots'}
@@ -84,7 +84,7 @@
 
 {:else if variant === 'orbit'}
 	<div class="relative {sizeClasses[size]} {className}" aria-label={label} role="status">
-		<div class="absolute inset-0 rounded-full border-2 border-current opacity-25"></div>
+		<div class="absolute inset-0 rounded-full border-2 border-current opacity-25 {colorClasses[color]}"></div>
 		<div class="absolute inset-0 rounded-full border-2 border-transparent border-t-current {speedClasses[speed]} {colorClasses[color]}"></div>
 		<div class="absolute inset-1 rounded-full border border-transparent border-t-current animate-spin {colorClasses[color]}" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
 	</div>

@@ -30,10 +30,10 @@
 	const displayMessage = message || messages[type];
 
 	const spinnerConfigs = {
-		uploading: { variant: 'circle' as const, color: 'blue' as const },
-		processing: { variant: 'dots' as const, color: 'green' as const },
+		uploading: { variant: 'circle' as const, color: 'sky' as const },
+		processing: { variant: 'dots' as const, color: 'emerald' as const },
 		thinking: { variant: 'orbit' as const, color: 'purple' as const },
-		searching: { variant: 'wave' as const, color: 'yellow' as const },
+		searching: { variant: 'wave' as const, color: 'amber' as const },
 		analyzing: { variant: 'bars' as const, color: 'indigo' as const }
 	};
 
@@ -50,8 +50,8 @@
 
 {#if fullscreen}
 	<!-- Fullscreen overlay -->
-	<div class="fixed inset-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center">
-		<div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 border border-slate-200 dark:border-slate-700">
+	<div class="fixed inset-0 bg-stone-50/90 dark:bg-stone-900/90 backdrop-blur-sm z-50 flex items-center justify-center">
+		<div class="bg-white dark:bg-stone-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 border border-stone-200 dark:border-stone-700">
 			<div class="text-center space-y-4">
 				{#if showSpinner}
 					<div class="flex justify-center">
@@ -64,17 +64,17 @@
 					</div>
 				{/if}
 				<div class="space-y-2">
-					<h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+					<h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100">
 						{displayMessage}
 					</h3>
 					{#if progress !== undefined}
-						<div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+						<div class="w-full bg-stone-200 dark:bg-stone-700 rounded-full h-2 overflow-hidden">
 							<div
-								class="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300 ease-out"
+								class="h-full bg-gradient-to-r from-sky-500 to-sky-600 rounded-full transition-all duration-300 ease-out"
 								style="width: {progress}%"
 							></div>
 						</div>
-						<p class="text-sm text-slate-500 dark:text-slate-400">{progress}% completado</p>
+						<p class="text-sm text-stone-500 dark:text-stone-400">{progress}% completado</p>
 					{/if}
 				</div>
 			</div>
@@ -92,14 +92,14 @@
 				label={displayMessage}
 			/>
 		{/if}
-		<span class="text-sm text-slate-600 dark:text-slate-400">
+		<span class="text-sm text-stone-600 dark:text-stone-400">
 			{displayMessage}
 		</span>
 	</div>
 
 {:else if variant === 'card'}
 	<!-- Card style -->
-	<div class="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 rounded-xl p-6 border border-slate-200 dark:border-slate-600 shadow-lg">
+	<div class="bg-gradient-to-r from-stone-50 to-stone-100 dark:from-stone-800 dark:to-stone-700 rounded-xl p-6 border border-stone-200 dark:border-stone-600 shadow-lg">
 		<div class="flex items-center space-x-4">
 			<div class="flex-shrink-0">
 				{#if showSpinner}
@@ -120,21 +120,21 @@
 				{/if}
 			</div>
 			<div class="flex-1 space-y-2">
-				<h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+				<h3 class="text-lg font-semibold text-stone-900 dark:text-stone-100">
 					{displayMessage}
 				</h3>
 				{#if progress !== undefined}
 					<div class="space-y-1">
-						<div class="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2 overflow-hidden">
+						<div class="w-full bg-stone-200 dark:bg-stone-600 rounded-full h-2 overflow-hidden">
 							<div
 								class="h-full bg-gradient-to-r from-{config.color}-500 to-{config.color}-600 rounded-full transition-all duration-500 ease-out shadow-sm"
 								style="width: {progress}%"
 							></div>
 						</div>
-						<p class="text-xs text-slate-500 dark:text-slate-400 text-right">{progress}%</p>
+						<p class="text-xs text-stone-500 dark:text-stone-400 text-right">{progress}%</p>
 					</div>
 				{:else}
-					<p class="text-sm text-slate-600 dark:text-slate-400">
+					<p class="text-sm text-stone-600 dark:text-stone-400">
 						Por favor espera mientras procesamos tu solicitud...
 					</p>
 				{/if}
@@ -145,7 +145,7 @@
 {:else if variant === 'inline'}
 	<!-- Inline with chat bubble style -->
 	<div class="flex items-start space-x-3 max-w-xl">
-		<div class="w-8 h-8 bg-gradient-to-r from-slate-400 to-slate-500 rounded-full flex items-center justify-center flex-shrink-0">
+		<div class="w-8 h-8 bg-gradient-to-r from-stone-400 to-stone-500 rounded-full flex items-center justify-center flex-shrink-0">
 			{#if showSpinner}
 				<Spinner
 					size="sm"
@@ -157,14 +157,14 @@
 				<span class="text-white text-sm">{iconMap[type]}</span>
 			{/if}
 		</div>
-		<div class="bg-slate-200 dark:bg-slate-700 rounded-2xl px-4 py-3 max-w-sm">
-			<p class="text-sm text-slate-800 dark:text-slate-200">
+		<div class="bg-stone-200 dark:bg-stone-700 rounded-2xl px-4 py-3 max-w-sm">
+			<p class="text-sm text-stone-800 dark:text-stone-200">
 				{displayMessage}
 			</p>
 			{#if progress !== undefined}
-				<div class="mt-2 w-full bg-slate-300 dark:bg-slate-600 rounded-full h-1.5 overflow-hidden">
+				<div class="mt-2 w-full bg-stone-300 dark:bg-stone-600 rounded-full h-1.5 overflow-hidden">
 					<div
-						class="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300 ease-out"
+						class="h-full bg-gradient-to-r from-sky-500 to-sky-600 rounded-full transition-all duration-300 ease-out"
 						style="width: {progress}%"
 					></div>
 				</div>
@@ -174,7 +174,7 @@
 
 {:else}
 	<!-- Default style -->
-	<div class="flex items-center space-x-3 p-4 bg-gradient-to-r from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600 shadow-sm backdrop-blur-sm">
+	<div class="flex items-center space-x-3 p-4 bg-gradient-to-r from-stone-50 to-white dark:from-stone-800/50 dark:to-stone-700/50 rounded-xl border border-stone-200 dark:border-stone-600 shadow-sm backdrop-blur-sm">
 		{#if showSpinner}
 			<Spinner
 				size="md"
@@ -184,11 +184,11 @@
 			/>
 		{/if}
 		<div class="flex-1">
-			<span class="text-slate-700 dark:text-slate-300 font-medium">
+			<span class="text-stone-700 dark:text-stone-300 font-medium">
 				{displayMessage}
 			</span>
 			{#if progress !== undefined}
-				<div class="mt-2 w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2 overflow-hidden">
+				<div class="mt-2 w-full bg-stone-200 dark:bg-stone-600 rounded-full h-2 overflow-hidden">
 					<div
 						class="h-full bg-gradient-to-r from-{config.color}-500 to-{config.color}-600 rounded-full transition-all duration-300 ease-out"
 						style="width: {progress}%"

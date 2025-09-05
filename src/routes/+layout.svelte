@@ -1,171 +1,267 @@
-<!-- src/routes/+layout.svelte - Layout integrado -->
+<!-- src/routes/+layout.svelte -->
 <script lang="ts">
-	import '../app.css';
-	import { onMount, type Snippet } from 'svelte';
+	import { onMount } from 'svelte';
+	import { fade } from 'svelte/transition';
+	import { chatState, chatActions, activeConversation } from '$lib/stores/chat';
+	import { startHealthMonitoring } from '$lib/services/api';
 	import { logger } from '$lib/stores/logger';
-	import { browser } from '$app/environment';
-	import { chatActions } from '$lib/stores/chat';
 
-	let { children }: { children: Snippet } = $props();
+	// Componentes de UI
+	import ChatSidebar from '$lib/components/chat/ChatSidebar.svelte';
+	import ChatWindow from '$lib/components/chat/ChatWindow.svelte';
+	import ConversationTabs from '$lib/components/chat/ConversationTabs.svelte';
+	import SearchPanel from '$lib/components/chat/SearchPanel.svelte';
+	import TagManager from '$lib/components/chat/TagManager.svelte';
+	import EnhancedExportModal from '$lib/components/chat/EnhancedExportModal.svelte';
+	import ConversationSummary from '$lib/components/chat/ConversationSummary.svelte';
+	import Spinner from '$lib/components/ui/Spinner.svelte';
 
-	let darkMode = $state(false);
-	let initialLoad = $state(true);
-	let isTogglingTheme = false;
+	// Estado de UI
+	let isSidebarCollapsed = false;
+	let isSearchPanelOpen = false;
+	let isTagManagerOpen = false;
+	let isExportModalOpen = false;
+	let isSummaryModalOpen = false;
+	let selectedModel = 'llama2';
+	let stopHealthCheck: () => void;
 
+	// Estado derivado
+	$: state = $chatState;
+	$: conversation = $activeConversation;
+	$: isConnected = state.isConnected;
+
+	// Funciones de UI
+	function toggleSidebar() {
+		isSidebarCollapsed = !isSidebarCollapsed;
+	}
+
+	function openSearch() {
+		isSearchPanelOpen = true;
+	}
+
+	function openTagManager() {
+		isTagManagerOpen = true;
+	}
+
+	function openExportModal() {
+		isExportModalOpen = true;
+	}
+
+	function openSummaryModal() {
+		isSummaryModalOpen = true;
+	}
+
+	// Inicialización y limpieza
 	onMount(() => {
-		// Log inicial cuando se monta la aplicación
-		logger.info('Aplicación RAG con Chat Inteligente inicializada', {
-			timestamp: new Date().toISOString(),
-			userAgent: navigator.userAgent,
-			viewport: {
-				width: window.innerWidth,
-				height: window.innerHeight
-			}
-		}, 'App');
+		logger.info('Inicializando layout principal', null, 'Layout');
 
-		// Cargar conversaciones guardadas
+		// Cargar datos guardados
 		chatActions.loadFromStorage();
 
-		// Detectar preferencia de tema
-		const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-		const savedTheme = localStorage.getItem('theme');
+		// Iniciar monitoreo de salud
+		stopHealthCheck = startHealthMonitoring(30000);
 
-		if (savedTheme) {
-			darkMode = savedTheme === 'dark';
-		} else {
-			darkMode = prefersDark.matches;
-		}
+		// Escuchar eventos de teclado
+		window.addEventListener('keydown', handleKeyDown);
 
-		// Aplicar tema inicial
-		updateTheme();
-
-		// Escuchar cambios en la preferencia del sistema
-		prefersDark.addEventListener('change', (e) => {
-			if (!localStorage.getItem('theme')) {
-				darkMode = e.matches;
-				updateTheme();
-			}
-		});
-
-		// Ocultar la pantalla de carga después de un breve momento
-		setTimeout(() => {
-			initialLoad = false;
-		}, 200);
+		return () => {
+			if (stopHealthCheck) stopHealthCheck();
+			window.removeEventListener('keydown', handleKeyDown);
+			logger.info('Layout principal desmontado', null, 'Layout');
+		};
 	});
 
-	function updateTheme() {
-		if (browser) {
-			if (darkMode) {
-				document.documentElement.classList.add('dark');
-				localStorage.setItem('theme', 'dark');
-			} else {
-				document.documentElement.classList.remove('dark');
-				localStorage.setItem('theme', 'light');
-			}
+	// Atajos de teclado
+	function handleKeyDown(event: KeyboardEvent) {
+		// Solo procesar si no hay elementos activos como inputs o textareas
+		if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') {
+			return;
+		}
+
+		// Ctrl/Cmd + K para abrir búsqueda
+		if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+			event.preventDefault();
+			openSearch();
+		}
+
+		// Ctrl/Cmd + B para alternar sidebar
+		if ((event.ctrlKey || event.metaKey) && event.key === 'b') {
+			event.preventDefault();
+			toggleSidebar();
+		}
+
+		// Ctrl/Cmd + E para exportar
+		if ((event.ctrlKey || event.metaKey) && event.key === 'e') {
+			event.preventDefault();
+			openExportModal();
 		}
 	}
-
-	function toggleTheme() {
-		if (isTogglingTheme) return;
-		isTogglingTheme = true;
-
-		darkMode = !darkMode;
-		updateTheme();
-
-		logger.info('Tema cambiado', {
-			newTheme: darkMode ? 'dark' : 'light'
-		}, 'ThemeToggle');
-
-		setTimeout(() => {
-			isTogglingTheme = false;
-		}, 100);
-	}
-
-	// Performance monitoring
-	onMount(() => {
-		if ('performance' in window) {
-			setTimeout(() => {
-				const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-				logger.info('Performance metrics', {
-					loadTime: navigation.loadEventEnd - navigation.loadEventStart,
-					domContentLoaded: navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
-					firstPaint: performance.getEntriesByName('first-paint')[0]?.startTime || 0,
-					firstContentfulPaint: performance.getEntriesByName('first-contentful-paint')[0]?.startTime || 0
-				}, 'Performance');
-			}, 1000);
-		}
-	});
 </script>
 
-<svelte:head>
-	<title>Train RAG Kit - Chat Inteligente con tus Documentos</title>
-	<meta name="description" content="Sistema avanzado de chat inteligente para análisis de documentos PDF usando RAG, con conversaciones múltiples, búsqueda avanzada y exportación." />
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<meta name="theme-color" content={darkMode ? '#1c1917' : '#fafaf9'} />
+<div class="flex h-screen bg-gray-100 dark:bg-gray-900 overflow-hidden">
+	<!-- Sidebar -->
+	<ChatSidebar isCollapsed={isSidebarCollapsed} />
 
-	<!-- Open Graph / Facebook -->
-	<meta property="og:type" content="website" />
-	<meta property="og:title" content="Train RAG Kit - Chat Inteligente" />
-	<meta property="og:description" content="Sistema avanzado para chatear con documentos PDF usando IA. Conversaciones múltiples, búsqueda inteligente y exportación." />
+	<!-- Main Content -->
+	<div class="flex-1 flex flex-col h-full overflow-hidden">
+		<!-- Header with tabs -->
+		<header class="flex flex-col bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-sm">
+			<!-- Top Toolbar -->
+			<div class="flex items-center justify-between px-4 h-12 border-b border-gray-200 dark:border-gray-700">
+				<div class="flex items-center">
+					<button
+						on:click={toggleSidebar}
+					aria-label={isSidebarCollapsed ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
+					class="mr-4 p-2 rounded-md hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors"
+						title={isSidebarCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
+					>
+						<svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+						</svg>
+					</button>
 
-	<!-- Twitter -->
-	<meta property="twitter:card" content="summary_large_image" />
-	<meta property="twitter:title" content="Train RAG Kit - Chat Inteligente" />
-	<meta property="twitter:description" content="Chatea inteligentemente con tus documentos PDF. Múltiples conversaciones, búsqueda avanzada y más." />
+					<div class="flex items-center">
+						<h1 class="text-lg font-semibold text-gray-900 dark:text-white">Chat Inteligente</h1>
+						{#if !isConnected}
+              <span class="ml-2 px-2 py-1 text-xs bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-full" role="status">
+                Desconectado
+              </span>
+						{/if}
+					</div>
+				</div>
 
-	<!-- Favicon -->
-	<link rel="icon" href="/favicon.ico" />
-	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+				<div class="flex items-center space-x-2">
+					<button
+						on:click={openSearch} aria-label="Buscar"
+						class="p-2 rounded-md hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors text-gray-600 dark:text-gray-300 flex items-center"
+						title="Buscar (Ctrl+K)"
+					>
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+						</svg>
+						<span class="ml-1 text-sm hidden sm:inline-block">Buscar</span>
+					</button>
 
-	<!-- Preload critical assets -->
-	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
-</svelte:head>
+					<div class="hidden sm:block h-6 border-r border-gray-300 dark:border-gray-600"></div>
 
-<!-- Contenedor principal con tema dinámico -->
-<div class="min-h-screen bg-stone-50 dark:bg-stone-900 text-stone-800 dark:text-stone-200 transition-colors duration-300 relative overflow-hidden">
-	<!-- Patrón de fondo sutil (mantenido de tu diseño original) -->
-	<div class="absolute inset-0 opacity-30 dark:opacity-20 pointer-events-none">
-		<div class="absolute inset-0" style="background-image: radial-gradient(circle at 1px 1px, rgb(120 113 108 / 0.15) 1px, transparent 0); background-size: 20px 20px;"></div>
-	</div>
+					<div class="flex items-center space-x-2">
+						<button
+							on:click={openTagManager} aria-label="Administrar etiquetas"
+							class="p-2 rounded-md hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors text-gray-600 dark:text-gray-300"
+							title="Administrar etiquetas"
+						>
+							<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+							</svg>
+						</button>
 
-	<!-- Toggle de tema (mantenido en tu posición original) -->
-	<button
-		onclick={toggleTheme}
-		class="fixed top-4 right-4 z-50 p-3 rounded-full bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm shadow-lg border border-stone-200/60 dark:border-stone-700/60 text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-sky-500"
-		aria-label="Cambiar tema"
-		title="Cambiar tema"
-	>
-		{#if darkMode}
-			<!-- Sol (modo claro) -->
-			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-			</svg>
-		{:else}
-			<!-- Luna (modo oscuro) -->
-			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-			</svg>
-		{/if}
-	</button>
+						<button
+							on:click={openSummaryModal} aria-label="Ver resumen de la conversación"
+							class="p-2 rounded-md hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors text-gray-600 dark:text-gray-300"
+							title="Resumen de conversación"
+							disabled={!conversation}
+						>
+							<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+							</svg>
+						</button>
 
-	<!-- Contenido principal -->
-	<div class="relative z-10 h-screen">
-		{@render children()}
+						<button
+							on:click={openExportModal}
+							aria-label="Exportar conversaciones"
+							class="p-2 rounded-md hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors text-gray-600 dark:text-gray-300"
+							title="Exportar conversaciones (Ctrl+E)"
+						>
+							<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+							</svg>
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- Tabs for navigation -->
+			<ConversationTabs />
+		</header>
+
+		<!-- Main Chat Window -->
+		<main class="flex-1 overflow-hidden bg-stone-50 dark:bg-stone-900">
+			{#if conversation}
+				<ChatWindow selectedModel={selectedModel} />
+			{:else}
+				<div class="h-full flex items-center justify-center">
+					<div class="text-center max-w-md p-6">
+						<div class="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
+							<svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+							</svg>
+						</div>
+						<h2 class="text-xl font-medium text-gray-900 dark:text-white mb-2">
+							No hay conversación activa
+						</h2>
+						<p class="text-gray-600 dark:text-gray-400 mb-6">
+							Selecciona una conversación existente del panel lateral o crea una nueva para comenzar a chatear.
+						</p>
+						<button
+							on:click={() => chatActions.createConversation()}
+							class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm transition-colors"
+						>
+							Iniciar nueva conversación
+						</button>
+					</div>
+				</div>
+			{/if}
+			<!-- Slot para renderizar el contenido de la página -->
+			<slot />
+		</main>
 	</div>
 </div>
 
-<!-- Loading screen para primera carga (mantenido igual) -->
-{#if browser}
+<!-- Modales -->
+<SearchPanel
+	isOpen={isSearchPanelOpen}
+	on:close={() => isSearchPanelOpen = false}
+/>
+
+<TagManager
+	isOpen={isTagManagerOpen}
+	conversationId={conversation?.id || null}
+	on:close={() => isTagManagerOpen = false}
+/>
+
+<EnhancedExportModal
+	isOpen={isExportModalOpen}
+	on:close={() => isExportModalOpen = false}
+/>
+
+<ConversationSummary
+	isOpen={isSummaryModalOpen}
+	conversationId={conversation?.id || null}
+	on:close={() => isSummaryModalOpen = false}
+/>
+
+<!-- Notificación de desconexión -->
+{#if !isConnected}
 	<div
-		class="fixed inset-0 bg-stone-50 dark:bg-stone-900 z-50 flex items-center justify-center transition-opacity duration-500"
-		class:opacity-0={!initialLoad}
-		class:pointer-events-none={!initialLoad}
+		class="fixed bottom-4 right-4 max-w-xs bg-white dark:bg-gray-800 rounded-lg shadow-lg border-l-4 border-red-500 p-4 flex items-start"
+		transition:fade={{ duration: 200 }}
 	>
-		<div class="text-center space-y-4">
-			<div class="w-12 h-12 border-4 border-stone-200 border-t-sky-600 rounded-full animate-spin mx-auto"></div>
-			<p class="text-stone-600 dark:text-stone-400">Cargando Chat Inteligente...</p>
+		<div class="flex-shrink-0 text-red-500 mr-3">
+			<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+			</svg>
+		</div>
+		<div>
+			<p class="font-medium text-gray-900 dark:text-white">
+				Conexión perdida
+			</p>
+			<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+				No se puede conectar con el servidor. Intentando reconectar...
+			</p>
+			<div class="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
+				<Spinner size="sm" class="mr-2" />
+				<span>Reconectando...</span>
+			</div>
 		</div>
 	</div>
 {/if}

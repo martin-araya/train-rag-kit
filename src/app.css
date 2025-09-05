@@ -1,3 +1,23 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
+
+@layer base {
+	*::-webkit-scrollbar {
+		width: theme(width.1.5);
+		height: theme(height.1.5);
+	}
+
+	*::-webkit-scrollbar-track {
+		background-color: transparent;
+	}
+
+	*::-webkit-scrollbar-thumb {
+		background-color: theme(colors.stone.300);
+		border-radius: theme(borderRadius.full);
+	}
+
+	.dark *::-webkit-scrollbar-thumb {
+		background-color: theme(colors.stone.600);
+	}
+}

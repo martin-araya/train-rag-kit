@@ -174,6 +174,8 @@
 		<div class="flex items-center space-x-2">
 			<button
 				on:click={() => showTimestamps = !showTimestamps}
+				aria-label={showTimestamps ? 'Ocultar marcas de tiempo' : 'Mostrar marcas de tiempo'}
+				aria-pressed={showTimestamps}
 				class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
 				class:bg-blue-100={showTimestamps}
 				class:dark:bg-blue-900={showTimestamps}
@@ -186,6 +188,8 @@
 
 			<button
 				on:click={() => showSources = !showSources}
+				aria-label={showSources ? 'Ocultar fuentes' : 'Mostrar fuentes'}
+				aria-pressed={showSources}
 				class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
 				class:bg-blue-100={showSources}
 				class:dark:bg-blue-900={showSources}
@@ -198,6 +202,7 @@
 
 			{#if conversation}
 				<button
+					aria-label="Generar resumen de la conversación"
 					class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
 					title="Generar resumen"
 					on:click={() => conversation && chatActions.generateSummary(conversation.id)}
@@ -306,6 +311,7 @@
 							<!-- Message actions -->
 							<div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
 								<button
+									aria-label="Copiar mensaje"
 									on:click={() => copyMessage(message.content)}
 									class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
 									title="Copiar mensaje"
@@ -317,6 +323,7 @@
 
 								<button
 									on:click={() => toggleMessageBookmark(message.id)}
+									aria-label="Marcar mensaje como favorito"
 									class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
 									class:text-yellow-500={message.isBookmarked}
 									title="Marcar mensaje"
@@ -328,6 +335,7 @@
 
 								{#if message.role === 'assistant'}
 									<button
+										aria-label="Regenerar respuesta"
 										on:click={() => regenerateResponse(index)}
 										class="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
 										title="Regenerar respuesta"
@@ -420,6 +428,7 @@
 
 			<button
 				on:click={sendMessage}
+				aria-label="Enviar mensaje"
 				disabled={!messageInput.trim() || isLoading}
 				class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors flex items-center space-x-2"
 			>
@@ -462,11 +471,6 @@
         overflow: hidden;
     }
 
-    /* Grupo hover para acciones de mensaje */
-    .group:hover .group-hover\:opacity-100 {
-        opacity: 1;
-    }
-
     /* Animación suave para el textarea */
     textarea {
         transition: height 0.1s ease;
@@ -485,10 +489,6 @@
     .overflow-y-auto::-webkit-scrollbar-thumb {
         background: #cbd5e1;
         border-radius: 3px;
-    }
-
-    .dark .overflow-y-auto::-webkit-scrollbar-thumb {
-        background: #475569;
     }
 
     /* Animación para los puntos de carga */

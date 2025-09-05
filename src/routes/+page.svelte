@@ -185,6 +185,7 @@
 			<!-- Right section -->
 			<div class="flex items-center space-x-2">
 				<button
+					aria-label="Subir documentos"
 					on:click={() => showFileUpload = true}
 					class="flex items-center space-x-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-all duration-200 text-sm shadow-sm hover:shadow-md hover:scale-105"
 					title="Subir documentos (Ctrl+U)"
@@ -197,6 +198,7 @@
 
 				<button
 					on:click={() => openExportModal()}
+					aria-label="Exportar conversaciones"
 					class="flex items-center space-x-2 px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-all duration-200 text-sm shadow-sm hover:shadow-md hover:scale-105"
 					title="Exportar conversaciones (Ctrl+E)"
 				>
@@ -335,8 +337,9 @@
 	{#if showFileUpload}
 		<!-- File Upload Modal -->
 		<div
+			role="dialog" aria-modal="true"
+			tabindex="-1"
 			class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-			on:click={(e) => e.target === e.currentTarget && (showFileUpload = false)}
 		>
 			<div class="bg-white dark:bg-stone-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden border border-stone-200 dark:border-stone-700">
 				<div class="flex items-center justify-between p-6 border-b border-stone-200 dark:border-stone-700">
@@ -344,6 +347,8 @@
 						Subir Documento PDF
 					</h2>
 					<button
+						type="button"
+						aria-label="Cerrar subida de archivos"
 						on:click={() => showFileUpload = false}
 						class="p-2 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-lg transition-colors text-stone-500 dark:text-stone-400"
 					>

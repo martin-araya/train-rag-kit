@@ -348,7 +348,7 @@ class ChatService {
 
 	// Métodos privados auxiliares
 
-	private calculateAverageResponseTime(messages: EnhancedMessage[]): number {
+	public calculateAverageResponseTime(messages: EnhancedMessage[]): number {
 		const responseTimes = messages
 			.filter(msg => msg.processingTime)
 			.map(msg => msg.processingTime!);
@@ -358,7 +358,7 @@ class ChatService {
 			: 0;
 	}
 
-	private extractDocumentReferences(messages: EnhancedMessage[]): string[] {
+	public extractDocumentReferences(messages: EnhancedMessage[]): string[] {
 		const documents = new Set<string>();
 
 		messages.forEach(message => {
@@ -370,7 +370,7 @@ class ChatService {
 		return Array.from(documents);
 	}
 
-	private extractKeyTopics(messages: EnhancedMessage[]): string[] {
+	public extractKeyTopics(messages: EnhancedMessage[]): string[] {
 		// Implementación simple - en producción usarías NLP
 		const allText = messages.map(msg => msg.content).join(' ').toLowerCase();
 		const words = allText.split(/\s+/);
@@ -391,7 +391,7 @@ class ChatService {
 			.map(([word]) => word);
 	}
 
-	private generateSummaryText(conversation: EnhancedConversation): string {
+	public generateSummaryText(conversation: EnhancedConversation): string {
 		const userQuestions = conversation.messages
 			.filter(msg => msg.role === 'user')
 			.slice(0, 5)
@@ -401,7 +401,7 @@ class ChatService {
 		return `Esta conversación incluye ${conversation.messages.length} mensajes sobre temas como: ${conversation.summary?.keyTopics?.join(', ') || 'varios temas'}. Las principales consultas fueron: ${userQuestions}`;
 	}
 
-	private calculateSummaryConfidence(conversation: EnhancedConversation): number {
+	public calculateSummaryConfidence(conversation: EnhancedConversation): number {
 		// Calcular confianza basada en varios factores
 		let confidence = 0.5; // Base
 
@@ -421,11 +421,11 @@ class ChatService {
 		return Math.min(1, confidence);
 	}
 
-	private isInDateRange(date: Date, range: { start: Date; end: Date }): boolean {
+	public isInDateRange(date: Date, range: { start: Date; end: Date }): boolean {
 		return date >= range.start && date <= range.end;
 	}
 
-	private createSnippet(content: string, searchTerm: string, maxLength: number = 150): string {
+	public createSnippet(content: string, searchTerm: string, maxLength: number = 150): string {
 		const index = content.toLowerCase().indexOf(searchTerm.toLowerCase());
 		if (index === -1) return content.substring(0, maxLength) + '...';
 
@@ -437,7 +437,7 @@ class ChatService {
 			(end < content.length ? '...' : '');
 	}
 
-	private calculateRelevance(content: string, searchTerm: string): number {
+	public calculateRelevance(content: string, searchTerm: string): number {
 		const contentLower = content.toLowerCase();
 		const termLower = searchTerm.toLowerCase();
 
@@ -448,7 +448,7 @@ class ChatService {
 		return Math.min(1, matches / Math.sqrt(content.length / 100));
 	}
 
-	private findHighlights(content: string, searchTerm: string): string[] {
+	public findHighlights(content: string, searchTerm: string): string[] {
 		const highlights = [];
 		const regex = new RegExp(searchTerm, 'gi');
 		let match;
@@ -462,7 +462,7 @@ class ChatService {
 		return highlights;
 	}
 
-	private generateSearchSuggestions(term: string, results: SearchResults['results']): string[] {
+	public generateSearchSuggestions(term: string, results: SearchResults['results']): string[] {
 		// Implementación simple de sugerencias
 		const suggestions = [];
 
@@ -477,7 +477,7 @@ class ChatService {
 		return suggestions.slice(0, 3);
 	}
 
-	private exportToMarkdown(conversations: EnhancedConversation[], options: ExportOptions): string {
+	public exportToMarkdown(conversations: EnhancedConversation[], options: ExportOptions): string {
 		let content = `# Exportación de Conversaciones\n\n`;
 		content += `**Fecha de exportación:** ${new Date().toLocaleString()}\n`;
 		content += `**Conversaciones incluidas:** ${conversations.length}\n\n`;
@@ -519,7 +519,7 @@ class ChatService {
 		return content;
 	}
 
-	private exportToJSON(conversations: EnhancedConversation[], options: ExportOptions): string {
+	public exportToJSON(conversations: EnhancedConversation[], options: ExportOptions): string {
 		const exportData = {
 			exportDate: new Date().toISOString(),
 			options,
@@ -537,7 +537,7 @@ class ChatService {
 		return JSON.stringify(exportData, null, 2);
 	}
 
-	private exportToText(conversations: EnhancedConversation[], options: ExportOptions): string {
+	public exportToText(conversations: EnhancedConversation[], options: ExportOptions): string {
 		let content = `EXPORTACIÓN DE CONVERSACIONES\n`;
 		content += `===============================\n\n`;
 		content += `Fecha de exportación: ${new Date().toLocaleString()}\n`;

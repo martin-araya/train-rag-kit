@@ -142,9 +142,11 @@
 
 {#if isOpen}
 	<!-- Backdrop -->
-	<div
+	<div role="button"
+		tabindex="0"
 		class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
 		on:click={(e) => e.target === e.currentTarget && !isExporting && closeModal()}
+		on:keydown={(e) => e.key === 'Enter' && e.target === e.currentTarget && !isExporting && closeModal()}
 	>
 		<!-- Modal -->
 		<div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
@@ -157,6 +159,7 @@
 					<button
 						on:click={closeModal}
 						class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+						aria-label="Cerrar modal de exportación"
 					>
 						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -438,9 +441,5 @@
     .overflow-y-auto::-webkit-scrollbar-thumb {
         background: #cbd5e1;
         border-radius: 2px;
-    }
-
-    .dark .overflow-y-auto::-webkit-scrollbar-thumb {
-        background: #475569;
     }
 </style>
